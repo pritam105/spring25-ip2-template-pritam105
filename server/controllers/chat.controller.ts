@@ -189,7 +189,9 @@ const chatController = (socket: FakeSOSocket) => {
 
     try {
       const chats = await getChatsByParticipants([username]);
-      const populatedChats = await Promise.all(chats.map(chat => populateDocument(chat._id?.toString(), 'chat')));
+      const populatedChats = await Promise.all(
+        chats.map(chat => populateDocument(chat._id?.toString(), 'chat')),
+      );
 
       if (populatedChats.some(chat => 'error' in chat)) {
         throw new Error('Failed populating the chats');

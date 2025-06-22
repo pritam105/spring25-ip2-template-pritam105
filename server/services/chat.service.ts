@@ -19,7 +19,6 @@ export const saveChat = async (chatPayload: CreateChatPayload): Promise<ChatResp
         return savedMessage._id;
       }),
     );
-    console.log('no error');
 
     const result = await ChatModel.create({
       participants: chatPayload.participants,
