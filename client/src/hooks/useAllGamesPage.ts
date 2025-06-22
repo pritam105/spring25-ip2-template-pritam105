@@ -21,21 +21,13 @@ const useAllGamesPage = () => {
 
   const fetchGames = async () => {
     // TODO: Task 2 - Fetch and update the list of available games state
-    try {
-      const games = await getGames(undefined, undefined);
-      setAvailableGames(games);
-    } catch (error) {
-      console.error('Error fetching games:', error);
-    }
+    const games = await getGames(undefined, undefined);
+    setAvailableGames(games);
   };
 
   const handleCreateGame = async (gameType: GameType) => {
     // TODO: Task 2 - Create a new game with the provided type
-    try {
-      await createGame(gameType);
-    } catch (error) {
-      console.error('Error creating game:', error);
-    }
+    await createGame(gameType);
     await fetchGames();
   };
 

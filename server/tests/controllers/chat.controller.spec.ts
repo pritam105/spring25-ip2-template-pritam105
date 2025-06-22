@@ -18,7 +18,6 @@ const populateDocumentSpy = jest.spyOn(databaseUtil, 'populateDocument');
 const getChatsByParticipantsSpy = jest.spyOn(chatService, 'getChatsByParticipants');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const mockingoose = require('mockingoose');
 
 /**
  * Sample test suite for the /chat endpoints
@@ -205,7 +204,7 @@ describe('Chat Controller', () => {
 
       const response = await supertest(app).post(`/chat/${chatId}/addMessage`).send(messagePayload);
       expect(response.status).toBe(500);
-      expect(response.text).toContain('Error adding a message to chat: Service error');
+      expect(response.text).toContain('Error adding message to the chat: Service error');
     });
 
     it('should return 500 error if update chat fails', async () => {
@@ -223,7 +222,7 @@ describe('Chat Controller', () => {
 
       const response = await supertest(app).post(`/chat/${chatId}/addMessage`).send(messagePayload);
       expect(response.status).toBe(500);
-      expect(response.text).toContain('Error adding a message to chat:');
+      expect(response.text).toContain('Error adding message to the chat:');
     });
 
     it('should return 500 error if populate chat fails', async () => {
@@ -423,7 +422,7 @@ describe('Chat Controller', () => {
       expect(getChatsByParticipantsSpy).toHaveBeenCalledWith([username]);
       expect(populateDocumentSpy).toHaveBeenCalledWith(chats[0]._id?.toString(), 'chat');
       expect(response.status).toBe(500);
-      expect(response.text).toBe('Error retrieving chat: Failed populating chats');
+      expect(response.text).toBe('Error retrieving chat: Failed populating the chats');
     });
   });
 });
