@@ -27,8 +27,17 @@ describe('Chat service', () => {
   // 1. saveChat
   // ----------------------------------------------------------------------------
   describe('saveChat', () => {
-    // TODO: Task 3 - Write tests for the saveChat function
-
+    const mockChatPayload: CreateChatPayload = {
+      participants: ['testUser'],
+      messages: [
+        {
+          msg: 'Hello!',
+          msgFrom: 'testUser',
+          msgDateTime: new Date('2025-01-01T00:00:00.000Z'),
+          type: 'direct',
+        },
+      ],
+    };
 
     it('should successfully save a chat and verify its body (ignore exact IDs)', async () => {
       // 2) Mock message creation
@@ -69,6 +78,18 @@ describe('Chat service', () => {
       expect(result.participants[0]?.toString()).toEqual(expect.any(String));
       expect(result.messages[0]?.toString()).toEqual(expect.any(String));
     });
+
+    it('should return an error if an exception occurs', async () => {
+      // Using mock as mockingoose doesn't support throwing errors
+      jest.spyOn(MessageModel, 'create').mockRejectedValueOnce(new Error('DB Error'));
+
+      const result = await saveChat(mockChatPayload);
+
+      expect('error' in result).toBe(true);
+      if ('error' in result) {
+        expect(result.error).toContain('Error saving chat:');
+      }
+    });
   });
 
   // ----------------------------------------------------------------------------
@@ -106,6 +127,27 @@ describe('Chat service', () => {
         type: 'direct',
       });
     });
+
+    it('should return an error if user not found', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOne');
+
+      const result = await createMessage(mockMessage);
+      expect('error' in result).toBe(true);
+      if ('error' in result) {
+        expect(result.error).toContain('User not found');
+      }
+    });
+
+    it('should return an error if message creation fails', async () => {
+      mockingoose(UserModel).toReturn({ _id: 'id' }, 'findOne');
+      jest.spyOn(MessageModel, 'create').mockRejectedValueOnce(new Error('Creation failed'));
+
+      const result = await createMessage(mockMessage);
+      expect('error' in result).toBe(true);
+      if ('error' in result) {
+        expect(result.error).toContain('Error creating message:');
+      }
+    });
   });
 
   // ----------------------------------------------------------------------------
@@ -135,8 +177,70 @@ describe('Chat service', () => {
 
       expect(result.messages).toEqual(mockUpdatedChat.messages);
     });
+
+    it('should return an error if chat not found', async () => {
+      mockingoose(ChatModel).toReturn(null, 'findOneAndUpdate');
+
+      const result = await addMessageToChat('invalidChatID', 'messageID');
+      expect('error' in result).toBe(true);
+      if ('error' in result) {
+        expect(result.error).toContain('Chat not found');
+      }
+    });
+
+    it('should return an error if DB fails', async () => {
+      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockRejectedValueOnce(new Error('DB Error'));
+
+      const result = await addMessageToChat('chatID', 'messageID');
+      expect('error' in result).toBe(true);
+      if ('error' in result) {
+        expect(result.error).toContain('Error adding message to chat:');
+      }
+    });
   });
 
+  // ----------------------------------------------------------------------------
+  // 4. getChat
+  // ----------------------------------------------------------------------------
+  describe('getChat', () => {
+    it('should retrieve a chat by ID', async () => {
+      const mockFoundChat: Chat = {
+        _id: new mongoose.Types.ObjectId(),
+        participants: ['testUser'],
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as Chat;
+
+      mockingoose(ChatModel).toReturn(mockFoundChat, 'findOne'); // or 'findById' => 'findOne'
+      const result = await getChat(mockFoundChat._id!.toString());
+
+      if ('error' in result) {
+        throw new Error('Expected a chat, got an error');
+      }
+      expect(result._id).toEqual(mockFoundChat._id);
+    });
+
+    it('should return an error if the chat is not found', async () => {
+      mockingoose(ChatModel).toReturn(null, 'findOne');
+
+      const result = await getChat('chatID');
+      expect('error' in result).toBe(true);
+      if ('error' in result) {
+        expect(result.error).toContain('Chat not found');
+      }
+    });
+
+    it('should return an error if DB fails', async () => {
+      jest.spyOn(ChatModel, 'findById').mockRejectedValueOnce(new Error('DB Error'));
+
+      const result = await getChat('chatID');
+      expect('error' in result).toBe(true);
+      if ('error' in result) {
+        expect(result.error).toContain('Error getting chat:');
+      }
+    });
+  });
 
   // ----------------------------------------------------------------------------
   // 5. addParticipantToChat
@@ -165,6 +269,38 @@ describe('Chat service', () => {
         throw new Error('Expected a chat, got an error');
       }
       expect(result._id).toEqual(mockChat._id);
+    });
+
+    it('should return an error if user does not exist', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOne');
+
+      const result = await addParticipantToChat('chatID', 'invalidUserID');
+      expect('error' in result).toBe(true);
+      if ('error' in result) {
+        expect(result.error).toContain('User not found');
+      }
+    });
+
+    it('should return an error if chat is not found', async () => {
+      mockingoose(UserModel).toReturn({ _id: 'id' }, 'findOne');
+      mockingoose(ChatModel).toReturn(null, 'findOneAndUpdate');
+
+      const result = await addParticipantToChat('chatID', 'userID');
+      expect('error' in result).toBe(true);
+      if ('error' in result) {
+        expect(result.error).toContain('Chat not found');
+      }
+    });
+
+    it('should return an error if DB fails', async () => {
+      mockingoose(UserModel).toReturn({ _id: 'id' }, 'findOne');
+      jest.spyOn(ChatModel, 'findOneAndUpdate').mockRejectedValueOnce(new Error('DB Error'));
+
+      const result = await addParticipantToChat('chatID', 'userID');
+      expect('error' in result).toBe(true);
+      if ('error' in result) {
+        expect(result.error).toContain('Error adding participant to chat:');
+      }
     });
   });
 

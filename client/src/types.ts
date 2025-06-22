@@ -186,7 +186,7 @@ export interface MessageUpdatePayload {
  */
 export interface ChatUpdatePayload {
   chat: Chat;
-  type: 'created' | 'newMessage';
+  type: 'created' | 'newMessage' | 'newParticipant';
 }
 
 /**

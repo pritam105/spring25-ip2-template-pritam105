@@ -299,6 +299,13 @@ describe('Test userController', () => {
     });
 
     // TODO: Task 1 - Add more tests
+    it('should return 500 if database error while finding users', async () => {
+      getUsersListSpy.mockRejectedValueOnce(new Error('Error retrieving users'));
+
+      const response = await supertest(app).get(`/user/getUsers`);
+
+      expect(response.status).toBe(500);
+    });
   });
 
   describe('DELETE /deleteUser', () => {
@@ -349,5 +356,40 @@ describe('Test userController', () => {
     });
 
     // TODO: Task 1 - Add more tests
+    it('should return 400 if username is not provided', async () => {
+      const mockReqBody = {
+        biography: 'This is my new bio',
+      };
+
+      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toEqual('Invalid request body');
+    });
+
+    it('should return 400 if biography is not provided', async () => {
+      const mockReqBody = {
+        username: mockUser.username,
+      };
+
+      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      // console.log(response.text);
+      expect(response.text).toEqual('Invalid request body');
+    });
+
+    it('should return 500 if database error while updating', async () => {
+      const mockReqBody = {
+        username: mockUser.username,
+        biography: 'This is my new bio',
+      };
+
+      updatedUserSpy.mockResolvedValueOnce({ error: 'Error updating user' });
+
+      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+
+      expect(response.status).toBe(500);
+    });
   });
 });

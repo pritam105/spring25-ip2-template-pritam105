@@ -36,10 +36,9 @@ const useUsersListPage = () => {
      * @param user the user to remove
      * @returns a list without the given user
      */
-    const removeUserFromList = (prevUserList: User[], user: User) => {
+    const removeUserFromList = (prevUserList: User[], user: User) =>
       // TODO: Task 1 - Implement the function to remove a user from the list
-    };
-
+      prevUserList.filter(u => u.username !== user.username);
     /**
      * Adds a user to the userList, if not present. Otherwise updates the user.
      * @param prevUserList the list of users
@@ -49,6 +48,13 @@ const useUsersListPage = () => {
     const addUserToList = (prevUserList: User[], user: User) => {
       // TODO: Task 1 - Implement the function to add or update a user in the list
       // Add the user to the front of the list if it doesn't already exist
+      const userExists = prevUserList.some(u => u.username === user.username);
+
+      if (userExists) {
+        return prevUserList.map(u => (u.username === user.username ? user : u));
+      }
+
+      return [user, ...prevUserList];
     };
 
     /**
@@ -58,6 +64,11 @@ const useUsersListPage = () => {
      */
     const handleModifiedUserUpdate = (userUpdate: UserUpdatePayload) => {
       // TODO: Task 1 - Update the user list based on the user update type.
+      if (userUpdate.type === 'created') {
+        setUserList(prevUserList => addUserToList(prevUserList, userUpdate.user));
+      } else if (userUpdate.type === 'deleted') {
+        setUserList(prevUserList => removeUserFromList(prevUserList, userUpdate.user));
+      }
     };
 
     fetchData();
@@ -70,7 +81,9 @@ const useUsersListPage = () => {
   }, [socket]);
 
   // TODO: Task 1 - Filter the user list based on the userFilter value
-  const filteredUserlist = [];
+  const filteredUserlist = userList.filter(u =>
+    u.username.toLowerCase().includes(userFilter.toLowerCase()),
+  );
   return { userList: filteredUserlist, setUserFilter };
 };
 
